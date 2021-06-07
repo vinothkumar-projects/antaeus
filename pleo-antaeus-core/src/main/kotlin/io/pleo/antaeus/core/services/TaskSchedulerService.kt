@@ -6,13 +6,19 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
-class TaskSchedulerService {
+class TaskSchedulerService(
+    private val invoiceService: InvoiceService,
+    private val billingService: BillingService
+) {
 
     private val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
 
     fun scheduleTasks(): Unit {
         scheduler.scheduleAtFixedRate(
-            InvoiceProcessorTask(),
+            InvoiceProcessorTask(
+                invoiceService = invoiceService,
+                billingService = billingService
+            ),
             5000,
             getDelayUntilFirstDayOfMonth(),
             TimeUnit.MILLISECONDS

@@ -4,6 +4,9 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
+import io.pleo.antaeus.core.external.PaymentProvider
+import io.pleo.antaeus.data.AntaeusDal
+import io.pleo.antaeus.models.Invoice
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
@@ -12,10 +15,14 @@ import org.junit.jupiter.api.TestInstance
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
+import kotlin.random.Random
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TaskSchedulerServiceTest {
 
+    private val dal = mockk<AntaeusDal>()
+    private val invoiceService = InvoiceService(dal = dal)
+    private val billingService = BillingService(paymentProvider = getPaymentProvider())
     private val slot = slot<Long>()
     private val scheduler = mockk<ScheduledExecutorService>()
     private lateinit var taskSchedulerService: TaskSchedulerService
@@ -27,7 +34,7 @@ class TaskSchedulerServiceTest {
     fun setup() {
         mockkStatic(Executors::class)
         every { Executors.newScheduledThreadPool(any()) } returns scheduler
-        taskSchedulerService = TaskSchedulerService()
+        taskSchedulerService = TaskSchedulerService(invoiceService = invoiceService, billingService = billingService)
     }
 
     @BeforeEach
@@ -60,5 +67,13 @@ class TaskSchedulerServiceTest {
         taskSchedulerService.scheduleTasks()
 
         assertEquals(0, slot.captured)
+    }
+
+    fun getPaymentProvider(): PaymentProvider {
+        return object : PaymentProvider {
+            override fun charge(invoice: Invoice): Boolean {
+                return Random.nextBoolean()
+            }
+        }
     }
 }
