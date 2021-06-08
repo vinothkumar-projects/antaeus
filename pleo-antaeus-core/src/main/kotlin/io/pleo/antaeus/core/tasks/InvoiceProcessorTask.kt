@@ -1,33 +1,34 @@
 package io.pleo.antaeus.core.tasks
 
-import io.pleo.antaeus.core.exceptions.NetworkException
-import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.InvoiceService
+import io.pleo.antaeus.core.services.KafkaService
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
+import org.apache.kafka.clients.producer.RecordMetadata
 import java.util.*
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 class InvoiceProcessorTask(
     private val invoiceService: InvoiceService,
-    private val billingService: BillingService
+    private val kafkaService: KafkaService
 ) : TimerTask() {
-    override fun run() {
-        // how to make sure its not charged twice in parallel
-        val pendingInvoices: List<Invoice> = invoiceService.fetchAllByStatus(InvoiceStatus.PENDING)
-        // Process one by one (db lock?)
-        pendingInvoices.forEach {
-            try {
-                var status = billingService.processInvoice(it)
+    private val processInvoiceTopic = "process-invoices"
 
-                if (status) {
-                    invoiceService.changeStatus(it.id, InvoiceStatus.PAID)
-                    println("invoice charged successfully")
-                } else {
-                    println("invoice is not charged successfully")
-                    // retry queue
-                }
-            } catch (e: NetworkException) {
-                // retry later?
+    override fun run() {
+        val pendingInvoices: List<Invoice> = invoiceService.fetchAllByStatus(InvoiceStatus.PENDING)
+        pendingInvoices.forEach {
+
+            val status: Future<RecordMetadata> =
+                kafkaService.sendToTopic(processInvoiceTopic, it.id.toString(), it.amount.toString())!!
+
+            try {
+                val recordMetaData: RecordMetadata = status.get(10000, TimeUnit.MILLISECONDS)
+                println("Invoice sent to topic ${recordMetaData.topic()}")
+                //how to rollback incase of error. use transaction
+                invoiceService.changeStatus(it.id, InvoiceStatus.PROCESSING)
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

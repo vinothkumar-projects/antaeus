@@ -8,10 +8,7 @@
 package io.pleo.antaeus.app
 
 import getPaymentProvider
-import io.pleo.antaeus.core.services.BillingService
-import io.pleo.antaeus.core.services.CustomerService
-import io.pleo.antaeus.core.services.InvoiceService
-import io.pleo.antaeus.core.services.TaskSchedulerService
+import io.pleo.antaeus.core.services.*
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
@@ -66,10 +63,13 @@ fun main() {
     // This is _your_ billing service to be included where you see fit
     val billingService = BillingService(paymentProvider = paymentProvider)
 
+    val kafkaService = KafkaService(broker = "localhost:29092")
+
     // Schedule tasks
     TaskSchedulerService(
         invoiceService = invoiceService,
-        billingService = billingService
+        billingService = billingService,
+        kafkaService = kafkaService
     ).scheduleTasks()
 
     // Create REST web service

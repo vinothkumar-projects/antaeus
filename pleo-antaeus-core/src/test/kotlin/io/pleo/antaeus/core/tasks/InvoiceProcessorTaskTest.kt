@@ -6,7 +6,6 @@ import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Money
 import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 
 class InvoiceProcessorTaskTest {
@@ -23,7 +22,7 @@ class InvoiceProcessorTaskTest {
     @Nested
     inner class CustomerAccountCharged() {
 
-        @Test
+        //@Test
         fun `All valid pending invoices are charged successfully`() {
         }
     }
@@ -31,7 +30,7 @@ class InvoiceProcessorTaskTest {
     @Nested
     inner class CurrencyMismatch() {
 
-        @Test
+        //@Test
         fun `Invoice not charged if currency is not matching`() {
         }
     }

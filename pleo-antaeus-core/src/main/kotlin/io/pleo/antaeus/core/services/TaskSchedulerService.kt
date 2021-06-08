@@ -8,7 +8,8 @@ import java.util.concurrent.TimeUnit
 
 class TaskSchedulerService(
     private val invoiceService: InvoiceService,
-    private val billingService: BillingService
+    private val billingService: BillingService,
+    private val kafkaService: KafkaService
 ) {
 
     private val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
@@ -17,7 +18,7 @@ class TaskSchedulerService(
         scheduler.scheduleAtFixedRate(
             InvoiceProcessorTask(
                 invoiceService = invoiceService,
-                billingService = billingService
+                kafkaService = kafkaService
             ),
             5000,
             getDelayUntilFirstDayOfMonth(),

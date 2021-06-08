@@ -23,6 +23,7 @@ class TaskSchedulerServiceTest {
     private val dal = mockk<AntaeusDal>()
     private val invoiceService = InvoiceService(dal = dal)
     private val billingService = BillingService(paymentProvider = getPaymentProvider())
+    private val kafkaService = mockk<KafkaService>()
     private val slot = slot<Long>()
     private val scheduler = mockk<ScheduledExecutorService>()
     private lateinit var taskSchedulerService: TaskSchedulerService
@@ -34,7 +35,11 @@ class TaskSchedulerServiceTest {
     fun setup() {
         mockkStatic(Executors::class)
         every { Executors.newScheduledThreadPool(any()) } returns scheduler
-        taskSchedulerService = TaskSchedulerService(invoiceService = invoiceService, billingService = billingService)
+        taskSchedulerService = TaskSchedulerService(
+            invoiceService = invoiceService,
+            billingService = billingService,
+            kafkaService = kafkaService
+        )
     }
 
     @BeforeEach
