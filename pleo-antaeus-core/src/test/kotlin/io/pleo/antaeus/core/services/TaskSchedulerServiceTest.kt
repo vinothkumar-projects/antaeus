@@ -46,7 +46,7 @@ class TaskSchedulerServiceTest {
     @BeforeEach
     fun scheduleTasks() {
         mockkStatic(Calendar::class)
-        every { scheduler.scheduleAtFixedRate(any(), any(), capture(slot), any()) } returns null
+        every { scheduler.scheduleAtFixedRate(any(), capture(slot), any(), any()) } returns null
         every { scheduler.scheduleWithFixedDelay(any(), any(), any(), any()) } returns null
     }
 

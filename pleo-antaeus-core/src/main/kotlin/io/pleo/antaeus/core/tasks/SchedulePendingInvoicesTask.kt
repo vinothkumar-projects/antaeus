@@ -4,6 +4,7 @@ import io.pleo.antaeus.core.services.InvoiceService
 import io.pleo.antaeus.core.services.KafkaService
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
+import mu.KotlinLogging
 import org.apache.kafka.clients.producer.RecordMetadata
 import java.util.*
 import java.util.concurrent.Future
@@ -14,7 +15,11 @@ class SchedulePendingInvoicesTask(
     private val kafkaService: KafkaService
 ) : TimerTask() {
 
+    private val logger = KotlinLogging.logger {}
+
     override fun run() {
+        logger.info { "Running ${javaClass.simpleName}" }
+
         val pendingInvoices: List<Invoice> = invoiceService.fetchAllByStatus(InvoiceStatus.PENDING)
         pendingInvoices.forEach {
 
@@ -23,11 +28,10 @@ class SchedulePendingInvoicesTask(
 
             try {
                 val recordMetaData: RecordMetadata = status.get(10, TimeUnit.SECONDS)
-                println("Invoice sent to topic ${recordMetaData.topic()}")
-                //how to rollback incase of error. use transaction
+                logger.info { "Invoice ${it.id} sent to topic ${recordMetaData.topic()}" }
                 invoiceService.changeStatus(it.id, InvoiceStatus.PROCESSING)
             } catch (e: Exception) {
-                e.printStackTrace()
+                logger.error(e) { "Failed to schedule invoice" }
             }
         }
     }
