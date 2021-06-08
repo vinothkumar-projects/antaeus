@@ -1,8 +1,14 @@
-## Antaeus
+## Summary of challenge
 
-Antaeus (/ænˈtiːəs/), in Greek mythology, a giant of Libya, the son of the sea god Poseidon and the Earth goddess Gaia. He compelled all strangers who were passing through the country to wrestle with him. Whenever Antaeus touched the Earth (his mother), his strength was renewed, so that even if thrown to the ground, he was invincible. Heracles, in combat with him, discovered the source of his strength and, lifting him up from Earth, crushed him to death.
-
-Welcome to our challenge.
+1. A [scheduler](https://github.com/vinothkumar-projects/antaeus/blob/master/pleo-antaeus-core/src/main/kotlin/io/pleo/antaeus/core/services/TaskSchedulerService.kt) is created, that will trigger a task on first of every month.
+2. This [task](https://github.com/vinothkumar-projects/antaeus/blob/master/pleo-antaeus-core/src/main/kotlin/io/pleo/antaeus/core/tasks/SchedulePendingInvoicesTask.kt) will send the invoices in pending state for processing to a Kafka topic `process-invoices`. Also it will change the invoice state to `PROCESSING`.
+3. Another [task](https://github.com/vinothkumar-projects/antaeus/blob/master/pleo-antaeus-core/src/main/kotlin/io/pleo/antaeus/core/tasks/ProcessInvoicesTask.kt) is scheduled to run every 5 seconds to consume and process the invoices present in the Kafka topic `process-invoices`.
+4. If payment is successful then invoice status is changed to `PAID`.
+5. Incase of failed payments, it is added to a new topic `retry-failed-invoices`.
+6. Another [task](https://github.com/vinothkumar-projects/antaeus/blob/master/pleo-antaeus-core/src/main/kotlin/io/pleo/antaeus/core/tasks/RetryFailedInvoicesTask.kt) is scheduled to run every 5 seconds to consume events from `retry-failed-invoices` and if the last payment attempt is more than 24 hours, then it will retry the payment.
+7. If the payment fails again, then a new event is sent to `dlq-invoices` topic.
+8. We can introduce any number of retry strategies by introducing new topics in the future incase of payment failures. 
+9. Dead letter queue(DLQ) can be either used to send notifications to customers for adding new payment method OR can also be used to manually verify the invoices and errors.
 
 ## The challenge
 
