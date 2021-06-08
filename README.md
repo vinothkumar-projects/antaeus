@@ -1,4 +1,8 @@
-## Summary of challenge
+## The challenge
+
+As most "Software as a Service" (SaaS) companies, Pleo needs to charge a subscription fee every month. Our database contains a few invoices for the different markets in which we operate. Your task is to build the logic that will schedule payment of those invoices on the first of the month. While this may seem simple, there is space for some decisions to be taken and you will be expected to justify them.
+
+## Summary of work
 
 1. A [scheduler](https://github.com/vinothkumar-projects/antaeus/blob/master/pleo-antaeus-core/src/main/kotlin/io/pleo/antaeus/core/services/TaskSchedulerService.kt) is created, that will trigger a task on first of every month.
 2. This [task](https://github.com/vinothkumar-projects/antaeus/blob/master/pleo-antaeus-core/src/main/kotlin/io/pleo/antaeus/core/tasks/SchedulePendingInvoicesTask.kt) will send the invoices in pending state for processing to a Kafka topic `process-invoices`. Also it will change the invoice state to `PROCESSING`.
@@ -10,22 +14,39 @@
 8. We can introduce any number of retry strategies by introducing new topics in the future incase of payment failures. 
 9. Dead letter queue(DLQ) can be either used to send notifications to customers for adding new payment method OR can also be used to manually verify the invoices and errors.
 
-## The challenge
+## Architecture
 
-As most "Software as a Service" (SaaS) companies, Pleo needs to charge a subscription fee every month. Our database contains a few invoices for the different markets in which we operate. Your task is to build the logic that will schedule payment of those invoices on the first of the month. While this may seem simple, there is space for some decisions to be taken and you will be expected to justify them.
+![architecture](https://github.com/vinothkumar-projects/antaeus/blob/master/docs/architecture.png)
 
-## Instructions
 
-Fork this repo with your solution. Ideally, we'd like to see your progression through commits, and don't forget to update the README.md to explain your thought process.
-
-Please let us know how long the challenge takes you. We're not looking for how speedy or lengthy you are. It's just really to give us a clearer idea of what you've produced in the time you decided to take. Feel free to go as big or as small as you want.
-
-## Developing
+## Instructions to run
 
 Requirements:
 - \>= Java 11 environment
+- Kakfa cluster
 
-Open the project using your favorite text editor. If you are using IntelliJ, you can open the `build.gradle.kts` file and it is gonna setup the project in the IDE for you.
+### Kafka
+
+- Use [this](https://github.com/vinothkumar-projects/antaeus/blob/master/scripts/docker-compose.yml) docker-compose file to create a kafka cluster locally.
+- Use [this](https://docs.docker.com/compose/install/) link to install docker-compose.
+
+Then run the below commands,
+```
+cd scripts
+```
+```
+docker-compose up -d
+```
+
+This starts the kafka cluster and the bootstrap server is available in port 29092.
+
+Following topics need to be created in this cluster,
+
+* `process-invoices`
+* `retry-failed-invoices`
+* `dlq-invoices`
+
+This [link](https://kafka.apache.org/quickstart) provides scripts to create topics on the cluster.
 
 ### Building
 
@@ -56,39 +77,11 @@ docker build -t antaeus
 docker run antaeus
 ```
 
-### App Structure
-The code given is structured as follows. Feel free however to modify the structure to fit your needs.
-```
-├── buildSrc
-|  | gradle build scripts and project wide dependency declarations
-|  └ src/main/kotlin/utils.kt 
-|      Dependencies
-|
-├── pleo-antaeus-app
-|       main() & initialization
-|
-├── pleo-antaeus-core
-|       This is probably where you will introduce most of your new code.
-|       Pay attention to the PaymentProvider and BillingService class.
-|
-├── pleo-antaeus-data
-|       Module interfacing with the database. Contains the database 
-|       models, mappings and access layer.
-|
-├── pleo-antaeus-models
-|       Definition of the Internal and API models used throughout the
-|       application.
-|
-└── pleo-antaeus-rest
-        Entry point for HTTP REST API. This is where the routes are defined.
-```
-
 ### Main Libraries and dependencies
+* [Kafka](https://kafka.apache.org) - For storing and retreiving events
 * [Exposed](https://github.com/JetBrains/Exposed) - DSL for type-safe SQL
 * [Javalin](https://javalin.io/) - Simple web framework (for REST)
 * [kotlin-logging](https://github.com/MicroUtils/kotlin-logging) - Simple logging framework for Kotlin
 * [JUnit 5](https://junit.org/junit5/) - Testing framework
 * [Mockk](https://mockk.io/) - Mocking library
 * [Sqlite3](https://sqlite.org/index.html) - Database storage engine
-
-Happy hacking 😁!
