@@ -13,6 +13,7 @@ As most "Software as a Service" (SaaS) companies, Pleo needs to charge a subscri
 7. If the payment fails again, then a new event is sent to `dlq-invoices` topic.
 8. We can introduce any number of retry strategies by introducing new topics in the future incase of payment failures. 
 9. Dead letter queue(DLQ) can be either used to send notifications to customers for adding new payment method OR can also be used to manually verify the invoices and errors.
+10. Kafka is used because it offers real time processing and reliability of events. At a later point of time, we could also use the events log for audit purposes or do analytics to understand payment failures. We can also try out different retry strategies based on this analysis.
 
 ## Architecture
 
