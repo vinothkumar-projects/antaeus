@@ -22,7 +22,7 @@ class TaskSchedulerServiceTest {
 
     private val dal = mockk<AntaeusDal>()
     private val invoiceService = InvoiceService(dal = dal)
-    private val billingService = BillingService(paymentProvider = getPaymentProvider())
+    private val billingService = BillingService(paymentProvider = getPaymentProvider(), invoiceService = invoiceService)
     private val kafkaService = mockk<KafkaService>()
     private val slot = slot<Long>()
     private val scheduler = mockk<ScheduledExecutorService>()

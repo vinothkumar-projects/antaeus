@@ -1,6 +1,7 @@
 package io.pleo.antaeus.core.services
 
 import io.pleo.antaeus.core.tasks.ProcessInvoicesTask
+import io.pleo.antaeus.core.tasks.RetryFailedInvoicesTask
 import io.pleo.antaeus.core.tasks.SchedulePendingInvoicesTask
 import java.util.*
 import java.util.concurrent.Executors
@@ -18,6 +19,7 @@ class TaskSchedulerService(
     fun scheduleTasks() {
         schedulePendingInvoices()
         processInvoices()
+        retryFailedInvoices()
     }
 
     // This function returns the number of milliseconds until the next first day of month
@@ -38,7 +40,7 @@ class TaskSchedulerService(
                 invoiceService = invoiceService,
                 kafkaService = kafkaService
             ),
-            5000,
+            getDelayUntilFirstDayOfMonth(),
             getDelayUntilFirstDayOfMonth(),
             TimeUnit.MILLISECONDS
         )
@@ -51,9 +53,22 @@ class TaskSchedulerService(
                 billingService = billingService,
                 kafkaService = kafkaService
             ),
-            10000,
-            5000,
-            TimeUnit.MILLISECONDS
+            10,
+            5,
+            TimeUnit.SECONDS
+        )
+    }
+
+    private fun retryFailedInvoices() {
+        scheduler.scheduleWithFixedDelay(
+            RetryFailedInvoicesTask(
+                invoiceService = invoiceService,
+                billingService = billingService,
+                kafkaService = kafkaService
+            ),
+            11,
+            5,
+            TimeUnit.SECONDS
         )
     }
 }

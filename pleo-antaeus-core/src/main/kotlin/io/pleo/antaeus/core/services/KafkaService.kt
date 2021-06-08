@@ -15,10 +15,13 @@ import java.util.concurrent.Future
 
 class KafkaService(
     private val broker: String,
-    private val processInvoiceTopic: String
+    private val processInvoiceTopic: String,
+    private val retryFailedInvoicesTopic: String,
+    private val deadInvoicesTopic: String
 ) {
     private val producer = createProducer()
     private val processInvoicesTopicConsumer = createConsumer()
+    private val retryFailedInvoicesTopicConsumer = createConsumer()
 
     init {
         subscribeToTopics()
@@ -44,6 +47,7 @@ class KafkaService(
 
     private fun subscribeToTopics() {
         processInvoicesTopicConsumer.subscribe(listOf(processInvoiceTopic))
+        retryFailedInvoicesTopicConsumer.subscribe(listOf(retryFailedInvoicesTopic))
     }
 
     private fun sendToTopic(topic: String, key: String, value: String): Future<RecordMetadata>? {
@@ -58,7 +62,19 @@ class KafkaService(
         return sendToTopic(processInvoiceTopic, key, value)
     }
 
+    fun sendToRetryFailedInvoicesTopic(key: String, value: String): Future<RecordMetadata>? {
+        return sendToTopic(retryFailedInvoicesTopic, key, value)
+    }
+
+    fun sendToDeadInvoicesTopic(key: String, value: String): Future<RecordMetadata>? {
+        return sendToTopic(deadInvoicesTopic, key, value)
+    }
+
     fun consumeFromProcessInvoicesTopic(): ConsumerRecords<String, String>? {
         return consumeEventsFromTopic(processInvoicesTopicConsumer)
+    }
+
+    fun consumeFromRetryFailedInvoicesTopic(): ConsumerRecords<String, String>? {
+        return consumeEventsFromTopic(retryFailedInvoicesTopicConsumer)
     }
 }

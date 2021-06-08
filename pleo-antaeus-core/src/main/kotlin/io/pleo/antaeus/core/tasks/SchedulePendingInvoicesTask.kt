@@ -22,7 +22,7 @@ class SchedulePendingInvoicesTask(
                 kafkaService.sendToProcessInvoicesTopic(it.id.toString(), it.amount.toString())!!
 
             try {
-                val recordMetaData: RecordMetadata = status.get(10000, TimeUnit.MILLISECONDS)
+                val recordMetaData: RecordMetadata = status.get(10, TimeUnit.SECONDS)
                 println("Invoice sent to topic ${recordMetaData.topic()}")
                 //how to rollback incase of error. use transaction
                 invoiceService.changeStatus(it.id, InvoiceStatus.PROCESSING)

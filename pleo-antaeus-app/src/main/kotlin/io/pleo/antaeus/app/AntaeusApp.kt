@@ -61,11 +61,18 @@ fun main() {
     val customerService = CustomerService(dal = dal)
 
     // This is _your_ billing service to be included where you see fit
-    val billingService = BillingService(paymentProvider = paymentProvider)
+    val billingService = BillingService(paymentProvider = paymentProvider, invoiceService = invoiceService)
 
     val processInvoicesTopic = "process-invoices"
+    val retryFailedInvoicesTopic = "retry-failed-invoices"
+    val deadInvoicesTopic = "dlq-invoices"
 
-    val kafkaService = KafkaService(broker = "localhost:29092", processInvoiceTopic = processInvoicesTopic)
+    val kafkaService = KafkaService(
+        broker = "localhost:29092",
+        processInvoiceTopic = processInvoicesTopic,
+        retryFailedInvoicesTopic = retryFailedInvoicesTopic,
+        deadInvoicesTopic = deadInvoicesTopic
+    )
 
     // Schedule tasks
     TaskSchedulerService(
