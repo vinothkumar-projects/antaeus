@@ -9,18 +9,17 @@ import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
-class InvoiceProcessorTask(
+class SchedulePendingInvoicesTask(
     private val invoiceService: InvoiceService,
     private val kafkaService: KafkaService
 ) : TimerTask() {
-    private val processInvoiceTopic = "process-invoices"
 
     override fun run() {
         val pendingInvoices: List<Invoice> = invoiceService.fetchAllByStatus(InvoiceStatus.PENDING)
         pendingInvoices.forEach {
 
             val status: Future<RecordMetadata> =
-                kafkaService.sendToTopic(processInvoiceTopic, it.id.toString(), it.amount.toString())!!
+                kafkaService.sendToProcessInvoicesTopic(it.id.toString(), it.amount.toString())!!
 
             try {
                 val recordMetaData: RecordMetadata = status.get(10000, TimeUnit.MILLISECONDS)

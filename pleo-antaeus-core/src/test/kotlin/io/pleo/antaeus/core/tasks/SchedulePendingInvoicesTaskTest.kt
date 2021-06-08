@@ -8,7 +8,7 @@ import io.pleo.antaeus.models.Money
 import org.junit.jupiter.api.Nested
 import java.math.BigDecimal
 
-class InvoiceProcessorTaskTest {
+class SchedulePendingInvoicesTaskTest {
     private val dal = mockk<AntaeusDal>()
     private val customerOne = dal.createCustomer(Currency.EUR)!!
     private val customerTwo = dal.createCustomer(Currency.DKK)!!

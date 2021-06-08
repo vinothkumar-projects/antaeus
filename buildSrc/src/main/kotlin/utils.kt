@@ -24,6 +24,12 @@ fun Project.kotlinProject() {
         "testImplementation"("org.junit.jupiter:junit-jupiter-api:$junitVersion")
         "testImplementation"("org.junit.jupiter:junit-jupiter-params:$junitVersion")
         "runtime"("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+
+        // Kafka
+        "implementation"("org.apache.kafka:kafka-clients:2.8.0")
+
+        // Exposed
+        "implementation"("org.jetbrains.exposed:exposed:0.17.7")
     }
 }
 
@@ -32,7 +38,6 @@ fun Project.kotlinProject() {
  */
 fun Project.dataLibs() {
     dependencies {
-        "implementation"("org.jetbrains.exposed:exposed:0.17.7")
         "implementation"("org.xerial:sqlite-jdbc:3.30.1")
     }
 }

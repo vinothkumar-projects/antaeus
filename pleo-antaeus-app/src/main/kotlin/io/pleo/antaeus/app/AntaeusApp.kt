@@ -63,7 +63,9 @@ fun main() {
     // This is _your_ billing service to be included where you see fit
     val billingService = BillingService(paymentProvider = paymentProvider)
 
-    val kafkaService = KafkaService(broker = "localhost:29092")
+    val processInvoicesTopic = "process-invoices"
+
+    val kafkaService = KafkaService(broker = "localhost:29092", processInvoiceTopic = processInvoicesTopic)
 
     // Schedule tasks
     TaskSchedulerService(

@@ -26,10 +26,11 @@ class TaskSchedulerServiceTest {
     private val kafkaService = mockk<KafkaService>()
     private val slot = slot<Long>()
     private val scheduler = mockk<ScheduledExecutorService>()
-    private lateinit var taskSchedulerService: TaskSchedulerService
     private val timezone = TimeZone.getTimeZone("UTC")
     private val calendarOne = Calendar.getInstance(timezone)
     private val calendarTwo = Calendar.getInstance(timezone)
+
+    private lateinit var taskSchedulerService: TaskSchedulerService
 
     @BeforeAll
     fun setup() {
@@ -46,6 +47,7 @@ class TaskSchedulerServiceTest {
     fun scheduleTasks() {
         mockkStatic(Calendar::class)
         every { scheduler.scheduleAtFixedRate(any(), any(), capture(slot), any()) } returns null
+        every { scheduler.scheduleWithFixedDelay(any(), any(), any(), any()) } returns null
     }
 
     @Test

@@ -7,16 +7,24 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.clients.producer.RecordMetadata
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.Future
 
-class KafkaService(broker: String) {
-    private val producer = createProducer(broker)
-    private val consumer = createConsumer(broker)
+class KafkaService(
+    private val broker: String,
+    private val processInvoiceTopic: String
+) {
+    private val producer = createProducer()
+    private val processInvoicesTopicConsumer = createConsumer()
 
-    private fun createProducer(broker: String): Producer<String, String> {
+    init {
+        subscribeToTopics()
+    }
+
+    private fun createProducer(): Producer<String, String> {
         val props = Properties()
         props["bootstrap.servers"] = broker
         props["acks"] = "all"
@@ -25,23 +33,32 @@ class KafkaService(broker: String) {
         return KafkaProducer<String, String>(props)
     }
 
-    private fun createConsumer(broker: String): Consumer<String, String> {
+    private fun createConsumer(): Consumer<String, String> {
         val props = Properties()
         props["bootstrap.servers"] = broker
-        props["key.deserializer"] = StringSerializer::class.java
-        props["value.deserializer"] = StringSerializer::class.java
+        props["key.deserializer"] = StringDeserializer::class.java
+        props["value.deserializer"] = StringDeserializer::class.java
+        props["group.id"] = "antaeus-consumer"
         return KafkaConsumer<String, String>(props)
     }
 
-    fun sendToTopic(topic: String, key: String, value: String): Future<RecordMetadata>? {
+    private fun subscribeToTopics() {
+        processInvoicesTopicConsumer.subscribe(listOf(processInvoiceTopic))
+    }
+
+    private fun sendToTopic(topic: String, key: String, value: String): Future<RecordMetadata>? {
         return producer.send(ProducerRecord(topic, key, value))
     }
 
-    fun subscribeToTopics(topics: String) {
-        consumer.subscribe(listOf(topics))
+    private fun consumeEventsFromTopic(consumer: Consumer<String, String>): ConsumerRecords<String, String>? {
+        return consumer.poll(Duration.ofMillis(5000))
     }
 
-    fun consumeFromTopic(topic: String): ConsumerRecords<String, String>? {
-        return consumer.poll(Duration.ofMillis(5000))
+    fun sendToProcessInvoicesTopic(key: String, value: String): Future<RecordMetadata>? {
+        return sendToTopic(processInvoiceTopic, key, value)
+    }
+
+    fun consumeFromProcessInvoicesTopic(): ConsumerRecords<String, String>? {
+        return consumeEventsFromTopic(processInvoicesTopicConsumer)
     }
 }

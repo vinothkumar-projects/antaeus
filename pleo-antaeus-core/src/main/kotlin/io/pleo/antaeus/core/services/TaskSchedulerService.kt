@@ -1,6 +1,7 @@
 package io.pleo.antaeus.core.services
 
-import io.pleo.antaeus.core.tasks.InvoiceProcessorTask
+import io.pleo.antaeus.core.tasks.ProcessInvoicesTask
+import io.pleo.antaeus.core.tasks.SchedulePendingInvoicesTask
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -14,16 +15,9 @@ class TaskSchedulerService(
 
     private val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
 
-    fun scheduleTasks(): Unit {
-        scheduler.scheduleAtFixedRate(
-            InvoiceProcessorTask(
-                invoiceService = invoiceService,
-                kafkaService = kafkaService
-            ),
-            5000,
-            getDelayUntilFirstDayOfMonth(),
-            TimeUnit.MILLISECONDS
-        )
+    fun scheduleTasks() {
+        schedulePendingInvoices()
+        processInvoices()
     }
 
     // This function returns the number of milliseconds until the next first day of month
@@ -36,5 +30,30 @@ class TaskSchedulerService(
         }
 
         return (firstDayOfMonth.timeInMillis - Calendar.getInstance().timeInMillis)
+    }
+
+    private fun schedulePendingInvoices() {
+        scheduler.scheduleAtFixedRate(
+            SchedulePendingInvoicesTask(
+                invoiceService = invoiceService,
+                kafkaService = kafkaService
+            ),
+            5000,
+            getDelayUntilFirstDayOfMonth(),
+            TimeUnit.MILLISECONDS
+        )
+    }
+
+    private fun processInvoices() {
+        scheduler.scheduleWithFixedDelay(
+            ProcessInvoicesTask(
+                invoiceService = invoiceService,
+                billingService = billingService,
+                kafkaService = kafkaService
+            ),
+            10000,
+            5000,
+            TimeUnit.MILLISECONDS
+        )
     }
 }
