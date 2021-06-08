@@ -8,7 +8,8 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 class BillingService(
     private val paymentProvider: PaymentProvider,
-    private val invoiceService: InvoiceService
+    private val invoiceService: InvoiceService,
+    private val customerService: CustomerService
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -17,7 +18,10 @@ class BillingService(
         transaction {
             try {
                 val invoice = invoiceService.fetch(id) //Fetch and check to avoid double charge
-                if (invoice.status == InvoiceStatus.PROCESSING) {
+                val customer = customerService.fetch(invoice.customerId)
+                // In future, if currency doesn't match we could also send it to another queue for
+                // foreign currency payment processing or set invoice to INVALID status
+                if (invoice.status == InvoiceStatus.PROCESSING && customer.currency == invoice.amount.currency) {
                     status = paymentProvider.charge(invoice)
                 }
             } catch (e: Exception) {
